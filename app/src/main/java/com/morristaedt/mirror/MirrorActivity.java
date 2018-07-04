@@ -1,5 +1,6 @@
 package com.morristaedt.mirror;
 
+import android.app.AppComponentFactory;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.ColorFilter;
@@ -8,7 +9,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.ActionBar;
-import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,8 +24,6 @@ import com.morristaedt.mirror.modules.ChoresModule;
 import com.morristaedt.mirror.modules.CountdownModule;
 import com.morristaedt.mirror.modules.DayModule;
 import com.morristaedt.mirror.modules.ForecastModule;
-import com.morristaedt.mirror.modules.MoodModule;
-import com.morristaedt.mirror.modules.NewsModule;
 import com.morristaedt.mirror.modules.XKCDModule;
 import com.morristaedt.mirror.modules.YahooFinanceModule;
 import com.morristaedt.mirror.receiver.AlarmReceiver;
@@ -34,7 +33,7 @@ import com.squareup.picasso.Picasso;
 
 import java.lang.ref.WeakReference;
 
-public class MirrorActivity extends ActionBarActivity {
+public class MirrorActivity extends AppCompatActivity {
 
     @NonNull
     private ConfigurationSettings mConfigSettings;
@@ -49,7 +48,6 @@ public class MirrorActivity extends ActionBarActivity {
     private View mWaterPlants;
     private View mGroceryList;
     private ImageView mXKCDImage;
-    private MoodModule mMoodModule;
     private TextView mNewsHeadline;
     private TextView mCalendarTitleText;
     private TextView mCalendarDetailsText;
@@ -96,32 +94,6 @@ public class MirrorActivity extends ActionBarActivity {
             } else {
                 mBikeTodayText.setVisibility(View.GONE);
             }
-        }
-    };
-
-    private NewsModule.NewsListener mNewsListener = new NewsModule.NewsListener() {
-        @Override
-        public void onNewNews(String headline) {
-            if (TextUtils.isEmpty(headline)) {
-                mNewsHeadline.setVisibility(View.GONE);
-            } else {
-                mNewsHeadline.setVisibility(View.VISIBLE);
-                mNewsHeadline.setText(headline);
-                mNewsHeadline.setSelected(true);
-            }
-        }
-    };
-
-    private MoodModule.MoodListener mMoodListener = new MoodModule.MoodListener() {
-        @Override
-        public void onShouldGivePositiveAffirmation(final String affirmation) {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    mMoodText.setVisibility(affirmation == null ? View.GONE : View.VISIBLE);
-                    mMoodText.setText(affirmation);
-                }
-            });
         }
     };
 
@@ -211,10 +183,6 @@ public class MirrorActivity extends ActionBarActivity {
     @Override
     protected void onPause() {
         super.onPause();
-
-        if (mMoodModule != null) {
-            mMoodModule.release();
-        }
     }
 
     @Override
@@ -262,11 +230,7 @@ public class MirrorActivity extends ActionBarActivity {
             ForecastModule.getOpenWeatherForecast(getString(openWeatherApiKeyRes), mConfigSettings.getForecastUnits(), mConfigSettings.getLatitude(), mConfigSettings.getLongitude(), mForecastListener);
         }
 
-        if (mConfigSettings.showNewsHeadline()) {
-            NewsModule.getNewsHeadline(mNewsListener);
-        } else {
             mNewsHeadline.setVisibility(View.GONE);
-        }
 
         if (mConfigSettings.showXKCD()) {
             XKCDModule.getXKCDForToday(mXKCDListener);
@@ -287,12 +251,7 @@ public class MirrorActivity extends ActionBarActivity {
             mStockText.setVisibility(View.GONE);
         }
 
-        if (mConfigSettings.showMoodDetection()) {
-            mMoodModule = new MoodModule(new WeakReference<Context>(this));
-            mMoodModule.getCurrentMood(mMoodListener);
-        } else {
             mMoodText.setVisibility(View.GONE);
-        }
 
         if (mConfigSettings.showCountdown()){
             CountdownModule.getTimeRemaining(mConfigSettings.getCountdownEnd(), mCountdownListener);
